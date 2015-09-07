@@ -65,6 +65,7 @@ def get_random_property(subj):
         ?propertyVal rdfs:label ?propertyValLabel.
         FILTER(lang(?propertyValLabel) = "en").
       }
+      FILTER(regex(?property, "..")).
       FILTER(!regex(?property, "(%s)")).
       FILTER(?property != <http://dbpedia.org/ontology/wikiPageRevisionID>).
       FILTER(?property != <http://dbpedia.org/ontology/wikiPageID>).   
@@ -208,38 +209,69 @@ def alternate_universe(subject, prop, real_prop_val, alt_prop_val):
     return tmpl.render(subj_prop=subj_prop, real_prop_val=real_prop_val,
             alt_prop_val=alt_prop_val)
 
-def generate():
-    g = rdflib.Graph()
-    g.parse("dbpedia_3.9.owl")
+def get_random_resource(g):
     while True:
         class_ = get_random_class(g)
         class_str = get_label_string(g, class_)
         count = get_subject_count(class_)
         if count > 0:
             try:
-                subj = get_random_subject(class_, count)
+                return get_random_subject(class_, count)
             except IndexError as e:
                 continue
-            try:
-                prop_dict = get_random_property(subj['subject'])
-                alt_prop = get_random_neighboring_property(subj['subject'],
-                        prop_dict['url']).strip()
-            except IndexError as e:
-                continue
-            real_prop = prop_dict['value'].strip()
-            if real_prop.startswith('http') or alt_prop.startswith('http'):
-                continue
-            if real_prop.lower() == alt_prop.lower(): continue
-            output = alternate_universe(subj['label'], prop_dict['label'],
-                    real_prop, alt_prop)
-            output = output.replace("\n", "")
-            if len(output) <= 115:
-                return output + " " + get_property(subj['subject'],
-                        'foaf:isPrimaryTopicOf')
-            elif len(output) <= 140:
-                return output
+
+def get_subj_from_wikilink(href):
+    query = """
+    SELECT * WHERE {
+    ?subject rdfs:label ?label.
+    ?subject foaf:isPrimaryTopicOf <%s>.
+    FILTER(lang(?label) = "en").
+    }
+    """ % href
+    qstr = urllib.urlencode({'query': query, 'output': 'json',
+        'default-graph-uri': 'http://dbpedia.org'})
+    resp = urllib.urlopen("http://dbpedia.org/sparql?" + qstr)
+    obj = json.loads(resp.read())
+    try:
+        info = dict([(k, v['value']) for k, v \
+                in obj['results']['bindings'][0].iteritems() \
+                if not(k.startswith("List of"))])
+    except IndexError:
+        return None
+    return info 
+
+def generate(subj=None):
+    g = rdflib.Graph()
+    g.parse("dbpedia_3.9.owl")
+    while True:
+        if subj is None:
+            subj = get_random_resource(g)
+        try:
+            prop_dict = get_random_property(subj['subject'])
+            alt_prop = get_random_neighboring_property(subj['subject'],
+                    prop_dict['url']).strip()
+        except IndexError as e:
+            continue
+        real_prop = prop_dict['value'].strip()
+        if real_prop.startswith('http') or alt_prop.startswith('http'):
+            continue
+        if real_prop.lower() == alt_prop.lower(): continue
+        output = alternate_universe(subj['label'], prop_dict['label'],
+                real_prop, alt_prop)
+        output = output.replace("\n", "")
+        if len(output) <= 115:
+            return output + " " + get_property(subj['subject'],
+                    'foaf:isPrimaryTopicOf')
+        elif len(output) <= 140:
+            return output
 
 if __name__ == '__main__':
+    pool = [s.strip() for s in open("pool.txt").readlines()]
     while True:
-        print generate()
+        if random.randrange(3) > 0:
+            subj = get_subj_from_wikilink('http://en.wikipedia.org' + random.choice(pool))
+            print generate(subj)
+        else:
+            print generate()
+        time.sleep(1)
 
