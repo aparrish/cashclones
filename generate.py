@@ -10,6 +10,8 @@ import json
 import time
 import re
 
+from altuniverse import alternate_universe
+
 def get_random_class(g):
     return random.choice(list(g.subjects(RDFS.subClassOf, None)))
 
@@ -195,19 +197,6 @@ def get_random_subject(class_, count):
             if not(k.startswith("List of"))])
     return info 
 
-def alternate_universe(subject, prop, real_prop_val, alt_prop_val):
-    if prop.isupper(): prop = prop.lower()
-    if re.search(r"^[a-zA-Z ]+[^s]$", subject):
-        subj_prop = subject + "'s " + prop
-    else:
-        subj_prop = "the " + prop + " of " + subject
-    if sum(map(len, [subj_prop, real_prop_val, alt_prop_val])) <= 47:
-        tmpl_str = u"Everyone knows {{subj_prop}} is {{real_prop_val}}. What this book presupposes is\u2026 maybe it's {{alt_prop_val}}?"
-    else:
-        tmpl_str = u"Everyone knows {{subj_prop}} is {{real_prop_val}}. This book presupposes\u2026 maybe it's {{alt_prop_val}}?"
-    tmpl = Template(tmpl_str)
-    return tmpl.render(subj_prop=subj_prop, real_prop_val=real_prop_val,
-            alt_prop_val=alt_prop_val)
 
 def get_random_resource(g):
     while True:
@@ -268,7 +257,8 @@ def generate(subj=None):
 if __name__ == '__main__':
     pool = [s.strip() for s in open("pool.txt").readlines()]
     while True:
-        if random.randrange(3) > 0:
+        print "---"
+        if random.randrange(4) > 0:
             subj = get_subj_from_wikilink('http://en.wikipedia.org' + random.choice(pool))
             print generate(subj)
         else:
