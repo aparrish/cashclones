@@ -1,7 +1,8 @@
+import random
 import sys
 import twython
 
-import generate
+from generate import generate, get_subj_from_wikilink
 
 consumer_key, consumer_secret, access_token, token_secret = sys.argv[1:]
 twitter = twython.Twython(consumer_key, consumer_secret, access_token,
@@ -14,5 +15,4 @@ if random.randrange(8) > 0:
     status = generate(subj)
 else:
     status = generate()
-twitter.update_status(status=generate.generate())
-
+twitter.update_status(status=status)
