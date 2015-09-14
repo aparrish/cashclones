@@ -28,7 +28,7 @@ tmpls = [
 
     "My <NEWORNOT>alternate <HISTORY> <NOVEL> begins with <THISSIMPLE> premise: what if {{subj_prop}} had been {{alt_prop_val}}, <INSTEADOF> {{real_prop_val}}?",
 
-    '<INITPHRASE>{{subj_prop}} is "{{real_prop_val}}"? <MUSTBE> a typo. <SURELYTHEY> {{alt_prop_val}}.',
+    '<INITPHRASE>{{ucfirst(subj_prop)}} is "{{real_prop_val}}"? <MUSTBE> a typo. <SURELYTHEY> {{alt_prop_val}}.',
 
     "<ACTUALLY>, and <PEOPLE> people <KNOW> this, {{alt_prop_val}} is {{subj_prop}}, not {{real_prop_val}}.<FYIORNOT>",
 
@@ -240,12 +240,3 @@ if __name__ == '__main__':
     while True:
         print alternate_universe("Halle Berry", "birth year", "1966", "2039")
 
-"""
-    if sum(map(len, [subj_prop, real_prop_val, alt_prop_val])) <= 47:
-        tmpl_str = u"Everyone knows {{subj_prop}} is {{real_prop_val}}. What this book presupposes is\u2026 maybe it's {{alt_prop_val}}?"
-    else:
-        tmpl_str = u"Everyone knows {{subj_prop}} is {{real_prop_val}}. This book presupposes\u2026 maybe it's {{alt_prop_val}}?"
-    tmpl = Template(tmpl_str)
-    return tmpl.render(subj_prop=subj_prop, real_prop_val=real_prop_val,
-            alt_prop_val=alt_prop_val)
-"""
